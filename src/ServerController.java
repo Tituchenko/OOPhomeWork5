@@ -7,9 +7,45 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public class ServerController {
+    private static Model model;
 
+    public static double calcFormula(String s) throws Exception{
+        while (s.contains("(")){
+            int startBracket=s.lastIndexOf("(");
+            int endBracket=s.indexOf(")",startBracket);
+            s=s.substring(0,startBracket)+calcFormula(s.substring(startBracket+1,endBracket))+
+                    s.substring(endBracket+1,s.length());
+        }
+        int startIndexNum=0;
+        ArrayList<Double> num = new ArrayList<Double>();
+        ArrayList<Character> operation= new ArrayList<Character>();
+        char symbol;
+        for (int i=0;i<s.length();i++){
+            if (!Character.isDigit(s.charAt(i)) && !(s.charAt(i)=='.')){
+                num.add(Double.parseDouble(s.substring(startIndexNum, i)));
+                operation.add(s.charAt(i));
+                i++;
+                startIndexNum=i;
+
+
+            }
+            if (i==s.length()-1){
+                num.add(Double.parseDouble(s.substring(startIndexNum, i+1)));
+            }
+        }
+        double result;
+        try {
+            result=model.calc(num,operation);
+        } catch (Exception e){
+            throw e;
+        }
+        return result;
+
+    }
     public static String calc (String s){
-        String error=check(s);
+
+        model= new PowDecorator(new ServerModel());
+        String error=model.check(s);
         Logger logger = Logger.getAnonymousLogger();
 
         SimpleFormatter formatter = new SimpleFormatter();
@@ -45,57 +81,7 @@ public class ServerController {
             return error;
         }
     }
-    private static String check(String s){
-        int countBracket=0;
-        for (int i=0;i<s.length();i++){
-            if (Character.isDigit(s.charAt(i)) || s.charAt(i)=='.' ||
-                    s.charAt(i)=='+' || s.charAt(i)=='-' || s.charAt(i)=='*' || s.charAt(i)=='/'){
-                continue;
-            } else if (s.charAt(i)=='('){
-                countBracket+=1;
-            } else if (s.charAt(i)==')'){
-                countBracket-=1;
-            } else {
-                return "Некорреткный символ:" + s.charAt(i);
-            }
-        }
-        if (countBracket==0){
-            return "Ok";
-        }
-        return "Некорректные скобки";
-    }
-
-    private static double calcFormula(String s) throws Exception{
-        while (s.contains("(")){
-            int startBracket=s.lastIndexOf("(");
-            int endBracket=s.indexOf(")",startBracket);
-            s=s.substring(0,startBracket)+calcFormula(s.substring(startBracket+1,endBracket))+
-                    s.substring(endBracket+1,s.length());
-        }
-        int startIndexNum=0;
-        ArrayList<Double> num = new ArrayList<Double>();
-        ArrayList<Character> operation= new ArrayList<Character>();
-        char symbol;
-        for (int i=0;i<s.length();i++){
-            if (!Character.isDigit(s.charAt(i)) && !(s.charAt(i)=='.')){
-               num.add(Double.parseDouble(s.substring(startIndexNum, i)));
-               operation.add(s.charAt(i));
-               i++;
-               startIndexNum=i;
 
 
-            }
-            if (i==s.length()-1){
-                num.add(Double.parseDouble(s.substring(startIndexNum, i+1)));
-            }
-        }
-        double result;
-        try {
-            result=ServerModel.calc(num,operation);
-        } catch (Exception e){
-            throw e;
-        }
-        return result;
 
-    }
 }
